@@ -14,12 +14,12 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::latest()->get();
+
         return response()->json([
             'data' => $categories,
             'message' => 'Categories fetched successfully',
             'status' => 'success',
         ], 200);
-        // fetch all records from the categories table
     }
 
     /**
@@ -30,6 +30,7 @@ class CategoryController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
         ]);
 
         if ($validator->fails()) {
@@ -40,27 +41,47 @@ class CategoryController extends Controller
             ], 422);
         }
 
-        $category1 = new Category();
-        $category1->name = $request->name;
-        $category1->description = $request->description;
-        $category1->status = $request->status;
-        if ($category1->save()) {
+        $category = new Category();
 
+        $category->name = $request->name;
+        $category->description = $request->description;
+        $category->status = $request->status;
+
+        if ($category->save()) {
             return response()->json([
-                'data' => $category1,
+                'data' => $category,
                 'message' => 'Category created successfully',
                 'status' => 'success',
             ], 201);
-
-            // insert data into the categories table
         }
+
+        return response()->json([
+            'data' => null,
+            'message' => 'Category could not be created',
+            'status' => 'error',
+        ], 500);
     }
+
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
-        // fetch a single record from the categories table based on the provided ID
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json([
+                'data' => null,
+                'message' => 'Category not found',
+                'status' => 'error',
+            ], 404);
+        }
+
+        return response()->json([
+            'data' => $category,
+            'message' => 'Category fetched successfully',
+            'status' => 'success',
+        ], 200);
     }
 
     /**
@@ -68,7 +89,47 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // update a record in the categories table based on the provided ID
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json([
+                'data' => null,
+                'message' => 'Category not found',
+                'status' => 'error',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'data' => $validator->errors(),
+                'message' => 'Validation failed',
+                'status' => 'error',
+            ], 422);
+        }
+
+        $category->name = $request->name;
+        $category->description = $request->description;
+        $category->status = $request->status;
+
+        if ($category->save()) {
+            return response()->json([
+                'data' => $category,
+                'message' => 'Category updated successfully',
+                'status' => 'success',
+            ], 200);
+        }
+
+        return response()->json([
+            'data' => null,
+            'message' => 'Category could not be updated',
+            'status' => 'error',
+        ], 500);
     }
 
     /**
@@ -76,6 +137,28 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        // delete a record from the categories table based on the provided ID
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json([
+                'data' => null,
+                'message' => 'Category not found',
+                'status' => 'error',
+            ], 404);
+        }
+
+        if ($category->delete()) {
+            return response()->json([
+                'data' => null,
+                'message' => 'Category deleted successfully',
+                'status' => 'success',
+            ], 200);
+        }
+
+        return response()->json([
+            'data' => null,
+            'message' => 'Category could not be deleted',
+            'status' => 'error',
+        ], 500);
     }
 }
